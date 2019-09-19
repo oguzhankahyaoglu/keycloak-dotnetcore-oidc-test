@@ -50,17 +50,15 @@ namespace WebApplication1
                 c.SwaggerDoc("v1", new Info {Title = "My API", Version = "v1"});
                 c.DescribeAllEnumsAsStrings();
                 // JWT-token authentication by password
-                c.AddSecurityDefinition("oauth2", new OAuth2Scheme
+                c.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OAuth2Scheme
                 {
-                    Type = "oauth2",
                     Flow = Configuration["Jwt:Flow"],
                     TokenUrl = Configuration["Jwt:TokenUrl"],
-                    AuthorizationUrl = Configuration["Jwt:AuthUrl"],
-                    // Optional scopes
-//                    Scopes = new Dictionary<string, string>
-//                    {
-//                        { Configuration["Jwt:ClientId"], Configuration["Jwt:ClientId"] },
-//                    }
+                    AuthorizationUrl = Configuration["Jwt:AuthUrl"]
+                });
+                c.AddSecurityRequirement(new Dictionary<string, IEnumerable<string>>
+                {
+                    {JwtBearerDefaults.AuthenticationScheme, new string[0]}
                 });
                 c.OperationFilter<AuthorizeCheckOperationFilter>();
             });
@@ -134,21 +132,10 @@ namespace WebApplication1
                     .OfType<AuthorizeAttribute>()
                     .Any();
 
-            if (hasAuthorize)
-            {
-                operation.Responses.Add("401", new Response {Description = "Unauthorized"});
-                operation.Responses.Add("403", new Response {Description = "Forbidden"});
-
-                operation.Security = new List<IDictionary<string, IEnumerable<string>>>
-                {
-                    new Dictionary<string, IEnumerable<string>> {{"oauth2", new string[0] { }}}
-                };
-            }
-
-            hasAuthorize =
-                context.ApiDescription.ControllerAttributes()
-                    .OfType<AuthorizeAttribute>()
-                    .Any();
+            hasAuthorize = hasAuthorize ||
+                           context.ApiDescription.ControllerAttributes()
+                               .OfType<AuthorizeAttribute>()
+                               .Any();
 
             if (hasAuthorize)
             {
@@ -157,7 +144,8 @@ namespace WebApplication1
 
                 operation.Security = new List<IDictionary<string, IEnumerable<string>>>
                 {
-                    new Dictionary<string, IEnumerable<string>> {{"oauth2", new string[0] { }}}
+                    new Dictionary<string, IEnumerable<string>>
+                        {{JwtBearerDefaults.AuthenticationScheme, new string[0] { }}}
                 };
             }
         }

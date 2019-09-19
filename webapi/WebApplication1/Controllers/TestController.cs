@@ -13,10 +13,11 @@ namespace WebApplication1.Controllers
         [HttpGet("now")]
         public ActionResult<DateTime> Now() => DateTime.Now;
 
-        [HttpGet("auth"), Authorize()]
+        [HttpGet("auth"), Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public ActionResult<DateTime> Auth() => DateTime.Now;
 
-        [HttpGet("auth-username"), Authorize(Roles = "TestRole")]
+        [HttpGet("auth-username"),
+         Authorize(Roles = "TestRole", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public ActionResult<string> AuthUsername()
         {
             var test1 = User.IsInRole("ROLE_USER");
